@@ -8,12 +8,10 @@ separately rendered video and is not an input camera-path file.
 
 | File | Purpose |
 | --- | --- |
-| `director.json` | Time-indexed camera poses and source/projection metadata. |
-| `calibration.json` | Source field of view, orientation, and camera limits. Supply the matching file for faithful playback. |
+| `director.json` | Time-indexed camera poses, source/projection metadata, and optional embedded calibration. |
 | Source video | The matching original wide video. Not included in this repository. |
 
-`source.json`, analysis observations, model files, and detection decisions are not
-needed to play these examples. Do not mix calibration files between examples.
+Playback needs only the matching video and `director.json`.
 
 ## Top-level fields
 
@@ -27,6 +25,7 @@ needed to play these examples. Do not mix calibration files between examples.
 | `coordinate_system` | `"field_camera_yaw_right_pitch_up"` | Positive yaw points right; positive pitch points up. The reader defaults to this value. |
 | `source_center_yaw` | Number, degrees | Source orientation offset for ERP sampling; defaults to zero. Do not add it to flat-mode sample yaw. |
 | `calibration_status` | Optional string | Descriptive calibration provenance, not an executable instruction. |
+| `calibration` | Optional object | Source angular span, reference orientation, and camera limits; see Calibration below. |
 | `time_unit` | `"seconds"` | Defaults to seconds if absent; other units are rejected. |
 | `angle_unit` | `"degrees"` | Defaults to degrees if absent; other units are rejected. |
 | `fov_axis` | `"horizontal"` | FOV is horizontal; other axes are rejected. Defaults to horizontal. |
@@ -143,8 +142,8 @@ path normally. A file containing only `clips` retains continuous directing, whil
 
 ### `flat_uncalibrated`
 
-A flat wide source interpreted through an approximate angular mapping. Supply
-`calibration.assumed_hfov`; the current player falls back to 180 degrees if it is absent.
+A flat wide source interpreted through an approximate angular mapping. Optional
+`calibration.assumed_hfov` sets the source span; the player defaults to 180 degrees.
 These are approximate image angles, not a guarantee of physical lens calibration.
 
 For the baseline Plane crop on a 16:9 source, with `H = assumed_hfov`:
@@ -164,7 +163,7 @@ declared source projection.
 
 A stitched equirectangular panorama, normally 2:1, spanning 360 degrees horizontally
 and 180 degrees vertically. Angles are spherical. Apply `source_center_yaw` once when
-mapping yaw to the source panorama; matching calibration can provide the effective
+mapping yaw to the source panorama; embedded calibration can provide the effective
 center yaw. Wrap horizontally at the panorama seam.
 
 This format support does **not** imply support for YouTube's native 360-degree player.
@@ -187,6 +186,14 @@ linked YouTube video; use the full files in `examples/` for those videos.
   "fov_axis": "horizontal",
   "angle_interpretation": "linear_image_angle_approximation",
   "output_aspect": [16, 9],
+  "calibration": {
+    "assumed_hfov": 180,
+    "center_yaw": 0,
+    "center_pitch": -5,
+    "yaw_limits": [-65, 65],
+    "pitch_limits": [-25, 15],
+    "fov_limits": [60, 110]
+  },
   "samples": [
     { "t": 0, "yaw": -10, "pitch": -5, "fov": 90 },
     { "t": 1, "yaw": 0, "pitch": -5, "fov": 80 },
@@ -197,11 +204,11 @@ linked YouTube video; use the full files in `examples/` for those videos.
 
 ## Calibration
 
-The current player reads this subset of `calibration.json`:
+`calibration` is an optional object inside `director.json`. All its fields are
+optional. The top-level `projection` determines playback projection.
 
 | Field | Meaning |
 | --- | --- |
-| `projection` | Source projection metadata; keep consistent with the director file. The director determines playback projection. |
 | `assumed_hfov` | Horizontal span of the flat source in degrees. |
 | `center_yaw` | Reference yaw; ERP source orientation offset, or baseline for flat-mode user adjustments. |
 | `center_pitch` | Reference pitch for user adjustments; not an extra offset to add to every sample. |
@@ -209,23 +216,27 @@ The current player reads this subset of `calibration.json`:
 | `pitch_limits` | `[minimum, maximum]` pitch in degrees. |
 | `fov_limits` | `[minimum, maximum]` horizontal FOV in degrees. |
 
-Example matching the synthetic path above:
+Example embedded in a director file:
 
 ```json
 {
-  "projection": "flat_uncalibrated",
-  "assumed_hfov": 180,
-  "center_yaw": 0,
-  "center_pitch": -5,
-  "yaw_limits": [-65, 65],
-  "pitch_limits": [-25, 15],
-  "fov_limits": [60, 110]
+  "calibration": {
+    "assumed_hfov": 180,
+    "center_yaw": 0,
+    "center_pitch": -5,
+    "yaw_limits": [-65, 65],
+    "pitch_limits": [-25, 15],
+    "fov_limits": [60, 110]
+  }
 }
 ```
 
-The original example snapshots also contain analysis regions, generator settings,
-`annotation_source`, and `annotation_time_seconds`. The player ignores these fields;
-`annotation_source` is a historical local path, not a file that users must provide.
-When calibration limits are absent, the current player derives limits from sample
-ranges. With no user overrides, calibration reference values do not shift the saved
-flat camera path. User changes can remap FOV or constrain the view.
+Numbers must be finite. `assumed_hfov` must be in `(0, 360]`. Limits must contain
+two numbers in ascending order (equal values are allowed); FOV limits must be positive.
+
+When calibration or individual fields are absent, the player uses the existing
+defaults: source span 180 degrees for flat or 360 for ERP, `center_yaw` falling back
+to top-level `source_center_yaw` then zero, `center_pitch` zero, and limits derived
+from sample ranges. Missing calibration is valid and produces no warning.
+With no user overrides, calibration reference values do not shift the saved flat
+camera path. User changes can remap FOV or constrain the view.

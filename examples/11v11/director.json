@@ -19,6 +19,23 @@
     16,
     9
   ],
+  "calibration": {
+    "assumed_hfov": 180.0,
+    "center_yaw": 0.0,
+    "center_pitch": 0,
+    "yaw_limits": [
+      -65.0,
+      65.0
+    ],
+    "pitch_limits": [
+      -24.77697939262473,
+      15.223020607375267
+    ],
+    "fov_limits": [
+      60.0,
+      110.0
+    ]
+  },
   "samples": [
     {
       "t": 0.0,
