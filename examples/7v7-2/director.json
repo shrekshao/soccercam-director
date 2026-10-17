@@ -48,6 +48,11 @@
       "end": 740,
       "name": "Goal"
     }
+    ,{
+      "start": 949,
+      "end": 965,
+      "name": "Goal"
+    }
   ],
   "time_unit": "seconds",
   "angle_unit": "degrees",
