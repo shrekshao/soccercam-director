@@ -33,6 +33,21 @@
       "end": 322,
       "name": "Shot miss"
     }
+    ,{
+      "start": 471,
+      "end": 491,
+      "name": "Goal"
+    }
+    ,{
+      "start": 621,
+      "end": 641,
+      "name": "Goal"
+    }
+    ,{
+      "start": 728,
+      "end": 740,
+      "name": "Goal"
+    }
   ],
   "time_unit": "seconds",
   "angle_unit": "degrees",
